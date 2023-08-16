@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'java17'
+        maven 'maven36'
+    }
+
+    stages {
+        stage('...') {
+            steps {
+                cleanWorkspace()
+            }
+        }
+
+        stage('...') {
+            steps {
+                userRemoteConfigs: [branch: 'master', poll: false, url: "https://github.com/pt-interview/pipelines"]
+                sh 'git checkout master'
+            }
+        }
+
+        stage('...') {
+            steps {
+                sh 'mvn parse-version set -DnewVersion=${next.major}.${next.minor}.${next.incremental}'
+            }
+        }
+
+        stage('...') {
+            steps {
+                sh 'mvn package'
+            }
+        }
+
+        stage('...') {
+            steps {
+                sh 'mvn release:perform'
+            }
+        }
+
+        stage('...') {
+            steps {
+                withCredentials([gitUsernamePassword(credentialsId: 'git-scm', gitToolName: 'Default')]) {
+                    sh 'git commit -am "Updated and released artifact version"'
+                    sh 'git add pom.xml'
+                    sh 'git push origin master'
+                }
+            }
+        }
+    }
+}
